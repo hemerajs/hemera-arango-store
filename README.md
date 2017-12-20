@@ -1,5 +1,5 @@
 # :avocado: Hemera-arango-store package
-
+[![Build Status](https://travis-ci.org/hemerajs/hemera-arango-store.svg?branch=master)](https://travis-ci.org/hemerajs/hemera-arango-store)
 [![npm](https://img.shields.io/npm/v/hemera-arango-store.svg?maxAge=3600)](https://www.npmjs.com/package/hemera-arango-store)
 [![styled with prettier](https://img.shields.io/badge/styled_with-prettier-ff69b4.svg)](#badge)
 
