@@ -1,0 +1,45 @@
+{
+  "name": "hemera-arango-store",
+  "version": "4.0.0",
+  "description": "This is a plugin to use Arangodb with Hemera",
+  "main": "index.js",
+  "repository": {
+    "url": "git@github.com:hemerajs/hemera-arango-store.git",
+    "type": "git"
+  },
+  "scripts": {
+    "lint": "eslint ./**/*.js",
+    "test": "nyc mocha -t 5000 --exit ./test/**/*.js",
+    "coverage": "npm run test && nyc report --reporter=html",
+    "patch": "np patch --yolo",
+    "minor": "np minor --yolo",
+    "major": "np major --yolo"
+  },
+  "author": "Dustin Deus (https://github.com/StarpTech)",
+  "license": "MIT",
+  "dependencies": {
+    "arangojs": "5.8.x",
+    "hemera-plugin": "0.1.x",
+    "hemera-store": "1.1.x"
+  },
+  "devDependencies": {
+    "code": "^3.0.2",
+    "eslint": "^4.9.0",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-mocha": "^4.11.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-prettier": "^2.4.0",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "hemera-joi": "^3.0.0",
+    "hemera-testsuite": "^1.4.1",
+    "mocha": "^4.0.1",
+    "nats": "^0.7.24",
+    "nats-hemera": "^3.0.0",
+    "np": "^2.18.3",
+    "nyc": "^11.2.1",
+    "prettier": "^1.9.2"
+  }
+}
