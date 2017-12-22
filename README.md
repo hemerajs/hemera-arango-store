@@ -59,7 +59,7 @@ hemera.arango
 hemera.aqlTemplate
 ```
 
-#### Dependencies
+## Dependencies
 - hemera-joi
 
 ## API
