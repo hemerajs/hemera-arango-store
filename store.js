@@ -133,6 +133,38 @@ class ArangoStore extends Store {
       .collection(req.collection)
       .replaceByExample({ _id: req.id }, data)
   }
+
+  /**
+   *
+   *
+   * @param {any} req
+   * @returns
+   * @memberof ArangoStore
+   */
+  count(req) {
+    return this._driver
+      .collection(req.collection)
+      .byExample(req.query)
+      .then(cursor => {
+        return cursor.count
+      })
+  }
+
+  /**
+   *
+   *
+   * @param {any} req
+   * @returns
+   * @memberof ArangoStore
+   */
+  exists(req) {
+    return this._driver
+      .collection(req.collection)
+      .byExample(req.query)
+      .then(cursor => {
+        return cursor.hasNext()
+      })
+  }
 }
 
 module.exports = ArangoStore

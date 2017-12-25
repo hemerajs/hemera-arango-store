@@ -530,4 +530,76 @@ describe('Hemera-arango-store', function() {
       }
     )
   })
+
+  it('count', function(done) {
+    hemera.act(
+      {
+        topic: 'arango-store',
+        cmd: 'create',
+        collection: testCollection,
+        databaseName: testDatabase,
+        data: {
+          name: 'nadja'
+        }
+      },
+      function(err, resp) {
+        expect(err).to.be.not.exists()
+        expect(resp).to.be.an.object()
+        expect(resp._id).to.be.a.string()
+
+        hemera.act(
+          {
+            topic: 'arango-store',
+            cmd: 'count',
+            collection: testCollection,
+            databaseName: testDatabase,
+            query: {}
+          },
+          function(err, resp) {
+            expect(err).to.be.not.exists()
+            expect(resp).to.be.a.number()
+
+            done()
+          }
+        )
+      }
+    )
+  })
+
+  it('exists', function(done) {
+    hemera.act(
+      {
+        topic: 'arango-store',
+        cmd: 'create',
+        collection: testCollection,
+        databaseName: testDatabase,
+        data: {
+          name: 'nadja'
+        }
+      },
+      function(err, resp) {
+        expect(err).to.be.not.exists()
+        expect(resp).to.be.an.object()
+        expect(resp._id).to.be.a.string()
+
+        hemera.act(
+          {
+            topic: 'arango-store',
+            cmd: 'exists',
+            collection: testCollection,
+            databaseName: testDatabase,
+            query: {
+              _id: resp._id
+            }
+          },
+          function(err, resp) {
+            expect(err).to.be.not.exists()
+            expect(resp).to.be.a.true()
+
+            done()
+          }
+        )
+      }
+    )
+  })
 })

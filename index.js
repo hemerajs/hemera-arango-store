@@ -225,6 +225,22 @@ function hemeraArangoStore(hemera, opts, done) {
     return store.find(req, req.options)
   })
 
+  hemera.add(StorePattern.count(topic), function(req) {
+    let db = useDb(req.databaseName || opts.arango.databaseName)
+
+    const store = new ArangoStore(db)
+
+    return store.count(req, req.options)
+  })
+
+  hemera.add(StorePattern.exists(topic), function(req) {
+    let db = useDb(req.databaseName || opts.arango.databaseName)
+
+    const store = new ArangoStore(db)
+
+    return store.exists(req, req.options)
+  })
+
   done()
 }
 
