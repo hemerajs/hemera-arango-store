@@ -244,11 +244,12 @@ function hemeraArangoStore(hemera, opts, done) {
   done()
 }
 
-const plugin = Hp(hemeraArangoStore, '>=3')
-plugin[Symbol.for('name')] = require('./package.json').name
-plugin[Symbol.for('options')] = {
-  payloadValidator: 'hemera-joi',
-  arango: {}
-}
-plugin[Symbol.for('dependencies')] = ['hemera-joi']
-module.exports = plugin
+module.exports = Hp(hemeraArangoStore, {
+  hemera: '>=3',
+  name: require('./package.json').name,
+  dependencies: ['hemera-joi'],
+  options: {
+    payloadValidator: 'hemera-joi',
+    arango: {}
+  }
+})
