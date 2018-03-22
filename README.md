@@ -15,7 +15,7 @@ docker run -e ARANGO_NO_AUTH=1 -d --name arangodb-instance -d arangodb -p 8529:8
 
 ### Running the tests
 
-Install and start Arangodb before starting.
+Install and start Arangodb before running the tests.
 
 **arangod.conf**
 ```
