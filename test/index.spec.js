@@ -52,10 +52,7 @@ describe('Hemera-arango-store', function() {
       .then(() => {
         server = HemeraTestsuite.start_server(PORT, () => {
           const nats = Nats.connect(natsUrl)
-          hemera = new Hemera(nats, {
-            crashOnFatal: false,
-            logLevel: 'silent'
-          })
+          hemera = new Hemera(nats)
           hemera.use(HemeraJoi)
           hemera.use(HemeraArangoStore, {
             arango: {
