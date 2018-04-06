@@ -53,15 +53,14 @@ describe('Hemera-arango-store', function() {
         server = HemeraTestsuite.start_server(PORT, () => {
           const nats = Nats.connect(natsUrl)
           hemera = new Hemera(nats)
-          hemera.use(HemeraJoi)
           hemera.use(HemeraArangoStore, {
-            arango: {
+            database: {
               url: arangoOptions.url,
-              databaseName: testDatabase
+              name: testDatabase
             }
           })
           hemera.ready(function() {
-            aql = hemera.aqlTemplate
+            aql = hemera.aql
             done()
           })
         })
@@ -105,7 +104,7 @@ describe('Hemera-arango-store', function() {
         cmd: 'createCollection',
         type: 'edge',
         name: testCollection,
-        databaseName: testDatabase
+        database: testDatabase
       },
       (err, resp) => {
         expect(err).to.be.not.exists()
@@ -125,7 +124,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'createCollection',
         name: testCollection,
-        databaseName: testDatabase
+        database: testDatabase
       },
       (err, resp) => {
         expect(err).to.be.not.exists()
@@ -147,7 +146,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'executeAqlQuery',
         type: 'one',
-        databaseName: testDatabase,
+        database: testDatabase,
         query: aql`INSERT ${user} INTO testColl return NEW`
       },
       function(err, resp) {
@@ -165,7 +164,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'executeAqlQuery',
         type: 'all',
-        databaseName: testDatabase,
+        database: testDatabase,
         query: `
             FOR u IN testColl
             RETURN u
@@ -189,7 +188,7 @@ describe('Hemera-arango-store', function() {
       {
         topic: 'arango-store',
         cmd: 'executeTransaction',
-        databaseName: testDatabase,
+        database: testDatabase,
         action,
         params: {
           age: 12
@@ -214,7 +213,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'create',
         collection: testCollection,
-        databaseName: testDatabase,
+        database: testDatabase,
         data: {
           name: 'peter'
         }
@@ -235,7 +234,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'create',
         collection: testCollection,
-        databaseName: testDatabase,
+        database: testDatabase,
         data: {
           name: 'peter'
         }
@@ -250,7 +249,7 @@ describe('Hemera-arango-store', function() {
             topic: 'arango-store',
             cmd: 'update',
             collection: testCollection,
-            databaseName: testDatabase,
+            database: testDatabase,
             data: {
               name: 'klaus'
             },
@@ -275,7 +274,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'create',
         collection: testCollection,
-        databaseName: testDatabase,
+        database: testDatabase,
         data: {
           name: 'peter'
         }
@@ -290,7 +289,7 @@ describe('Hemera-arango-store', function() {
             topic: 'arango-store',
             cmd: 'updateById',
             collection: testCollection,
-            databaseName: testDatabase,
+            database: testDatabase,
             data: {
               name: 'klaus'
             },
@@ -313,7 +312,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'create',
         collection: testCollection,
-        databaseName: testDatabase,
+        database: testDatabase,
         data: {
           name: 'olaf'
         }
@@ -328,7 +327,7 @@ describe('Hemera-arango-store', function() {
             topic: 'arango-store',
             cmd: 'remove',
             collection: testCollection,
-            databaseName: testDatabase,
+            database: testDatabase,
             query: {
               name: 'olaf'
             }
@@ -351,7 +350,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'create',
         collection: testCollection,
-        databaseName: testDatabase,
+        database: testDatabase,
         data: {
           name: 'olaf'
         }
@@ -366,7 +365,7 @@ describe('Hemera-arango-store', function() {
             topic: 'arango-store',
             cmd: 'removeById',
             collection: testCollection,
-            databaseName: testDatabase,
+            database: testDatabase,
             id: resp._id
           },
           function(err, resp) {
@@ -387,7 +386,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'create',
         collection: testCollection,
-        databaseName: testDatabase,
+        database: testDatabase,
         data: {
           name: 'jens'
         }
@@ -402,7 +401,7 @@ describe('Hemera-arango-store', function() {
             topic: 'arango-store',
             cmd: 'findById',
             collection: testCollection,
-            databaseName: testDatabase,
+            database: testDatabase,
             id: resp._id
           },
           function(err, resp) {
@@ -422,7 +421,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'create',
         collection: testCollection,
-        databaseName: testDatabase,
+        database: testDatabase,
         data: {
           name: 'jens'
         }
@@ -437,7 +436,7 @@ describe('Hemera-arango-store', function() {
             topic: 'arango-store',
             cmd: 'find',
             collection: testCollection,
-            databaseName: testDatabase,
+            database: testDatabase,
             query: {}
           },
           function(err, resp) {
@@ -456,7 +455,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'create',
         collection: testCollection,
-        databaseName: testDatabase,
+        database: testDatabase,
         data: {
           name: 'nadine'
         }
@@ -471,7 +470,7 @@ describe('Hemera-arango-store', function() {
             topic: 'arango-store',
             cmd: 'replace',
             collection: testCollection,
-            databaseName: testDatabase,
+            database: testDatabase,
             data: {
               name: 'chris'
             },
@@ -496,7 +495,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'create',
         collection: testCollection,
-        databaseName: testDatabase,
+        database: testDatabase,
         data: {
           name: 'nadja'
         }
@@ -511,7 +510,7 @@ describe('Hemera-arango-store', function() {
             topic: 'arango-store',
             cmd: 'replaceById',
             collection: testCollection,
-            databaseName: testDatabase,
+            database: testDatabase,
             data: {
               name: 'nadja'
             },
@@ -534,7 +533,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'create',
         collection: testCollection,
-        databaseName: testDatabase,
+        database: testDatabase,
         data: {
           name: 'nadja'
         }
@@ -549,7 +548,7 @@ describe('Hemera-arango-store', function() {
             topic: 'arango-store',
             cmd: 'count',
             collection: testCollection,
-            databaseName: testDatabase,
+            database: testDatabase,
             query: {}
           },
           function(err, resp) {
@@ -569,7 +568,7 @@ describe('Hemera-arango-store', function() {
         topic: 'arango-store',
         cmd: 'create',
         collection: testCollection,
-        databaseName: testDatabase,
+        database: testDatabase,
         data: {
           name: 'nadja'
         }
@@ -584,7 +583,7 @@ describe('Hemera-arango-store', function() {
             topic: 'arango-store',
             cmd: 'exists',
             collection: testCollection,
-            databaseName: testDatabase,
+            database: testDatabase,
             query: {
               _id: resp._id
             }

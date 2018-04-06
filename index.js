@@ -6,249 +6,222 @@ const ArangoStore = require('./store')
 const StorePattern = require('hemera-store/pattern')
 
 function hemeraArangoStore(hemera, opts, done) {
-  const connections = {}
+  const databases = new Map()
   const topic = 'arango-store'
-  const Joi = hemera.joi
 
   hemera.decorate('arango', Arangojs)
-  hemera.decorate('aqlTemplate', Arangojs.aql)
+  hemera.decorate('aql', Arangojs.aql)
 
-  function useDb(databaseName) {
-    if (connections[databaseName]) {
-      return connections[databaseName]
+  function useDb(name) {
+    if (databases.has(name)) {
+      return databases.get(name)
     }
-
-    // try to create new db connection based on arango settings
-    if (opts.arango.databaseName) {
-      let options = Object.assign({}, opts.arango)
-
-      if (databaseName) {
-        options.databaseName = databaseName
-      }
-
-      connections[databaseName] = new Arangojs.Database(options)
-
-      return connections[databaseName]
-    }
-
-    // fallback to passed database instance
-    const dbName = opts.arango.driver.name
-
-    if (dbName !== databaseName) {
-      throw new Error(
-        `Default database is '${dbName}' but trying to connect to '${databaseName}'`
-      )
-    }
-    connections[dbName] = opts.arango.driver
-    return connections[dbName]
+    const db = new Arangojs.Database(opts.database)
+    databases.set(name, db.useDatabase(name))
+    return databases.get(name)
   }
 
-  /**
-   * Create a new database
-   */
-  hemera.add(
-    {
-      topic,
-      cmd: 'createDatabase',
-      name: Joi.string().required(),
-      users: Joi.array().optional()
-    },
-    function(req) {
-      let db = useDb('_system')
-      return db.createDatabase(req.name, req.users)
+  // encapsulate payload validator only to this plugin
+  hemera.use(require('hemera-joi')).after((err, done) => {
+    if (err) {
+      throw err
     }
-  )
-
-  /**
-   * Execute a transaction
-   */
-  hemera.add(
-    {
-      topic,
-      cmd: 'executeTransaction',
-      collections: Joi.object().required(),
-      action: Joi.string().required(),
-      params: Joi.object().optional(),
-      lockTimeout: Joi.object().optional()
-    },
-    function(req) {
-      let db = useDb(req.databaseName || opts.arango.databaseName)
-
-      let action = String(req.action)
-
-      return db.transaction(
-        req.collections,
-        action,
-        req.params,
-        req.lockTimeout
-      )
-    }
-  )
-
-  /**
-   * Create a new collection
-   */
-  hemera.add(
-    {
-      topic,
-      cmd: 'createCollection',
-      name: Joi.string().required(),
-      type: Joi.any()
-        .allow(['edge', ''])
-        .default(''),
-      databaseName: Joi.string().optional()
-    },
-    function(req) {
-      let db = useDb(req.databaseName || opts.arango.databaseName)
-
-      let collection
-
-      if (req.type === 'edge') {
-        collection = db.edgeCollection(req.name)
-      } else {
-        collection = db.collection(req.name)
+    const Joi = hemera.joi
+    /**
+     * Create a new database
+     */
+    hemera.add(
+      {
+        topic,
+        cmd: 'createDatabase',
+        name: Joi.string().required(),
+        users: Joi.array().optional()
+      },
+      function(req) {
+        let db = useDb('_system')
+        return db.createDatabase(req.name, req.users)
       }
+    )
 
-      return collection.create()
-    }
-  )
+    /**
+     * Execute a transaction
+     */
+    hemera.add(
+      {
+        topic,
+        cmd: 'executeTransaction',
+        collections: Joi.object().required(),
+        action: Joi.string().required(),
+        params: Joi.object().optional(),
+        lockTimeout: Joi.object().optional()
+      },
+      function(req) {
+        let db = useDb(req.database || opts.database.name)
 
-  /**
-   * Execute a AQL query and return the first result
-   */
-  hemera.add(
-    {
-      topic,
-      type: 'one',
-      cmd: 'executeAqlQuery',
-      databaseName: Joi.string().optional(),
-      variables: Joi.object().optional()
-    },
-    function(req) {
-      let db = useDb(req.databaseName || opts.arango.databaseName)
+        let action = String(req.action)
 
-      return db.query(req.query, req.variables).then(cursor => {
-        return cursor.next()
-      })
-    }
-  )
+        return db.transaction(
+          req.collections,
+          action,
+          req.params,
+          req.lockTimeout
+        )
+      }
+    )
 
-  /**
-   * Execute a AQL query and return all results
-   */
-  hemera.add(
-    {
-      topic,
-      type: 'all',
-      cmd: 'executeAqlQuery',
-      databaseName: Joi.string().optional(),
-      variables: Joi.object().optional()
-    },
-    function(req) {
-      let db = useDb(req.databaseName || opts.arango.databaseName)
+    /**
+     * Create a new collection
+     */
+    hemera.add(
+      {
+        topic,
+        cmd: 'createCollection',
+        name: Joi.string().required(),
+        type: Joi.any()
+          .allow(['edge', ''])
+          .default(''),
+        database: Joi.string().optional()
+      },
+      function(req) {
+        let db = useDb(req.database || opts.database.name)
 
-      return db.query(req.query, req.variables).then(cursor => {
-        return cursor.all()
-      })
-    }
-  )
+        let collection
 
-  hemera.add(StorePattern.create(topic), function(req) {
-    let db = useDb(req.databaseName || opts.arango.databaseName)
+        if (req.type === 'edge') {
+          collection = db.edgeCollection(req.name)
+        } else {
+          collection = db.collection(req.name)
+        }
 
-    const store = new ArangoStore(db)
+        return collection.create()
+      }
+    )
 
-    return store.create(req)
+    /**
+     * Execute a AQL query and return the first result
+     */
+    hemera.add(
+      {
+        topic,
+        type: 'one',
+        cmd: 'executeAqlQuery',
+        database: Joi.string().optional(),
+        variables: Joi.object().optional()
+      },
+      function(req) {
+        let db = useDb(req.database || opts.database.name)
+
+        return db.query(req.query, req.variables).then(cursor => {
+          return cursor.next()
+        })
+      }
+    )
+
+    /**
+     * Execute a AQL query and return all results
+     */
+    hemera.add(
+      {
+        topic,
+        type: 'all',
+        cmd: 'executeAqlQuery',
+        database: Joi.string().optional(),
+        variables: Joi.object().optional()
+      },
+      function(req) {
+        let db = useDb(req.database || opts.database.name)
+
+        return db.query(req.query, req.variables).then(cursor => {
+          return cursor.all()
+        })
+      }
+    )
+    hemera.add(StorePattern.create(topic), function(req) {
+      let db = useDb(req.database || opts.database.name)
+
+      const store = new ArangoStore(db)
+
+      return store.create(req)
+    })
+    hemera.add(StorePattern.update(topic), function(req) {
+      let db = useDb(req.database || opts.database.name)
+
+      const store = new ArangoStore(db)
+
+      return store.update(req, req.data)
+    })
+    hemera.add(StorePattern.updateById(topic), function(req) {
+      let db = useDb(req.database || opts.database.name)
+
+      const store = new ArangoStore(db)
+
+      return store.updateById(req, req.data)
+    })
+    hemera.add(StorePattern.remove(topic), function(req) {
+      let db = useDb(req.database || opts.database.name)
+
+      const store = new ArangoStore(db)
+
+      return store.remove(req)
+    })
+    hemera.add(StorePattern.removeById(topic), function(req) {
+      let db = useDb(req.database || opts.database.name)
+
+      const store = new ArangoStore(db)
+
+      return store.removeById(req)
+    })
+    hemera.add(StorePattern.replace(topic), function(req) {
+      let db = useDb(req.database || opts.database.name)
+
+      const store = new ArangoStore(db)
+
+      return store.replace(req, req.data)
+    })
+    hemera.add(StorePattern.replaceById(topic), function(req) {
+      let db = useDb(req.database || opts.database.name)
+
+      const store = new ArangoStore(db)
+
+      return store.replaceById(req, req.data)
+    })
+    hemera.add(StorePattern.findById(topic), function(req) {
+      let db = useDb(req.database || opts.database.name)
+
+      const store = new ArangoStore(db)
+
+      return store.findById(req)
+    })
+    hemera.add(StorePattern.find(topic), function(req) {
+      let db = useDb(req.database || opts.database.name)
+
+      const store = new ArangoStore(db)
+
+      return store.find(req, req.options)
+    })
+    hemera.add(StorePattern.count(topic), function(req) {
+      let db = useDb(req.database || opts.database.name)
+
+      const store = new ArangoStore(db)
+
+      return store.count(req, req.options)
+    })
+    hemera.add(StorePattern.exists(topic), function(req) {
+      let db = useDb(req.database || opts.database.name)
+
+      const store = new ArangoStore(db)
+
+      return store.exists(req, req.options)
+    })
+    done()
   })
-
-  hemera.add(StorePattern.update(topic), function(req) {
-    let db = useDb(req.databaseName || opts.arango.databaseName)
-
-    const store = new ArangoStore(db)
-
-    return store.update(req, req.data)
-  })
-
-  hemera.add(StorePattern.updateById(topic), function(req) {
-    let db = useDb(req.databaseName || opts.arango.databaseName)
-
-    const store = new ArangoStore(db)
-
-    return store.updateById(req, req.data)
-  })
-
-  hemera.add(StorePattern.remove(topic), function(req) {
-    let db = useDb(req.databaseName || opts.arango.databaseName)
-
-    const store = new ArangoStore(db)
-
-    return store.remove(req)
-  })
-
-  hemera.add(StorePattern.removeById(topic), function(req) {
-    let db = useDb(req.databaseName || opts.arango.databaseName)
-
-    const store = new ArangoStore(db)
-
-    return store.removeById(req)
-  })
-
-  hemera.add(StorePattern.replace(topic), function(req) {
-    let db = useDb(req.databaseName || opts.arango.databaseName)
-
-    const store = new ArangoStore(db)
-
-    return store.replace(req, req.data)
-  })
-
-  hemera.add(StorePattern.replaceById(topic), function(req) {
-    let db = useDb(req.databaseName || opts.arango.databaseName)
-
-    const store = new ArangoStore(db)
-
-    return store.replaceById(req, req.data)
-  })
-
-  hemera.add(StorePattern.findById(topic), function(req) {
-    let db = useDb(req.databaseName || opts.arango.databaseName)
-
-    const store = new ArangoStore(db)
-
-    return store.findById(req)
-  })
-
-  hemera.add(StorePattern.find(topic), function(req) {
-    let db = useDb(req.databaseName || opts.arango.databaseName)
-
-    const store = new ArangoStore(db)
-
-    return store.find(req, req.options)
-  })
-
-  hemera.add(StorePattern.count(topic), function(req) {
-    let db = useDb(req.databaseName || opts.arango.databaseName)
-
-    const store = new ArangoStore(db)
-
-    return store.count(req, req.options)
-  })
-
-  hemera.add(StorePattern.exists(topic), function(req) {
-    let db = useDb(req.databaseName || opts.arango.databaseName)
-
-    const store = new ArangoStore(db)
-
-    return store.exists(req, req.options)
-  })
-
   done()
 }
 
 module.exports = Hp(hemeraArangoStore, {
-  hemera: '>=5.0.0-rc.1',
+  hemera: '>=5.0.0',
   name: require('./package.json').name,
-  dependencies: ['hemera-joi'],
   options: {
-    arango: {}
+    database: {}
   }
 })
