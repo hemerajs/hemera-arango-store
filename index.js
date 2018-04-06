@@ -23,9 +23,6 @@ function hemeraArangoStore(hemera, opts, done) {
 
   // encapsulate payload validator only to this plugin
   hemera.use(require('hemera-joi')).after((err, done) => {
-    if (err) {
-      throw err
-    }
     const Joi = hemera.joi
     /**
      * Create a new database
@@ -213,7 +210,7 @@ function hemeraArangoStore(hemera, opts, done) {
 
       return store.exists(req, req.options)
     })
-    done()
+    done(err)
   })
   done()
 }
