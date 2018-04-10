@@ -53,13 +53,18 @@ describe('Hemera-arango-store', function() {
         server = HemeraTestsuite.start_server(PORT, () => {
           const nats = Nats.connect(natsUrl)
           hemera = new Hemera(nats)
+          hemera.use(HemeraJoi)
           hemera.use(HemeraArangoStore, {
             database: {
               url: arangoOptions.url,
               name: testDatabase
             }
           })
-          hemera.ready(function() {
+          hemera.ready(function(err) {
+            if (err) {
+              done(err)
+              return
+            }
             aql = hemera.aql
             done()
           })

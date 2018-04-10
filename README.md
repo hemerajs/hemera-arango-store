@@ -39,6 +39,7 @@ npm i hemera-arango-store --save
 
 ```js
 const hemera = new Hemera(nats)
+hemera.use(require('hemera-joi'))
 hemera.use(require('hemera-arango-store'), {
   database: {
     url: 'http://127.0.0.1:8529',
