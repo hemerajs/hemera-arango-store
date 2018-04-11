@@ -17,14 +17,19 @@ function hemeraArangoStore(hemera, opts, done) {
   const getDb = req => req.database || opts.database.name
 
   // Updates the URL list by requesting a list of all coordinators in the cluster
-  setInterval(() => {
-    arangodb
+  setInterval(() => acquireHostList(), opts.acquireHostListInterval)
+
+  function acquireHostList() {
+    return arangodb
       .acquireHostList()
       .then(() => hemera.info('Acquire new host list from server'))
       .catch(err =>
         hemera.error(err, 'Could not acquire new host list from server')
       )
-  }, opts.acquireHostListInterval)
+  }
+
+  // When your forgot to add all coordinators to the options.
+  acquireHostList()
 
   /**
    * Create a new database
