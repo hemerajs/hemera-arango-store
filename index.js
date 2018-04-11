@@ -6,22 +6,16 @@ const ArangoStore = require('./store')
 const StorePattern = require('hemera-store/pattern')
 
 function hemeraArangoStore(hemera, opts, done) {
-  const databases = new Map()
   const topic = 'arango-store'
 
   hemera.decorate('arango', Arangojs)
   hemera.decorate('aql', Arangojs.aql)
 
-  function useDb(name) {
-    if (databases.has(name)) {
-      return databases.get(name)
-    }
-    const db = new Arangojs.Database(opts.database)
-    databases.set(name, db.useDatabase(name))
-    return databases.get(name)
-  }
-
+  const arangodb = new Arangojs.Database(opts.database)
   const Joi = hemera.joi
+
+  const getDb = req => req.database || opts.database.name
+
   /**
    * Create a new database
    */
@@ -33,7 +27,7 @@ function hemeraArangoStore(hemera, opts, done) {
       users: Joi.array().optional()
     },
     function(req) {
-      let db = useDb('_system')
+      let db = arangodb.useDatabase('_system')
       return db.createDatabase(req.name, req.users)
     }
   )
@@ -51,7 +45,7 @@ function hemeraArangoStore(hemera, opts, done) {
       lockTimeout: Joi.object().optional()
     },
     function(req) {
-      let db = useDb(req.database || opts.database.name)
+      let db = arangodb.useDatabase(getDb(req))
 
       let action = String(req.action)
 
@@ -78,7 +72,7 @@ function hemeraArangoStore(hemera, opts, done) {
       database: Joi.string().optional()
     },
     function(req) {
-      let db = useDb(req.database || opts.database.name)
+      let db = arangodb.useDatabase(getDb(req))
 
       let collection
 
@@ -104,7 +98,7 @@ function hemeraArangoStore(hemera, opts, done) {
       variables: Joi.object().optional()
     },
     function(req) {
-      let db = useDb(req.database || opts.database.name)
+      let db = arangodb.useDatabase(getDb(req))
 
       return db.query(req.query, req.variables).then(cursor => {
         return cursor.next()
@@ -124,7 +118,7 @@ function hemeraArangoStore(hemera, opts, done) {
       variables: Joi.object().optional()
     },
     function(req) {
-      let db = useDb(req.database || opts.database.name)
+      let db = arangodb.useDatabase(getDb(req))
 
       return db.query(req.query, req.variables).then(cursor => {
         return cursor.all()
@@ -132,77 +126,77 @@ function hemeraArangoStore(hemera, opts, done) {
     }
   )
   hemera.add(StorePattern.create(topic), function(req) {
-    let db = useDb(req.database || opts.database.name)
+    let db = arangodb.useDatabase(getDb(req))
 
     const store = new ArangoStore(db)
 
     return store.create(req)
   })
   hemera.add(StorePattern.update(topic), function(req) {
-    let db = useDb(req.database || opts.database.name)
+    let db = arangodb.useDatabase(getDb(req))
 
     const store = new ArangoStore(db)
 
     return store.update(req, req.data)
   })
   hemera.add(StorePattern.updateById(topic), function(req) {
-    let db = useDb(req.database || opts.database.name)
+    let db = arangodb.useDatabase(getDb(req))
 
     const store = new ArangoStore(db)
 
     return store.updateById(req, req.data)
   })
   hemera.add(StorePattern.remove(topic), function(req) {
-    let db = useDb(req.database || opts.database.name)
+    let db = arangodb.useDatabase(getDb(req))
 
     const store = new ArangoStore(db)
 
     return store.remove(req)
   })
   hemera.add(StorePattern.removeById(topic), function(req) {
-    let db = useDb(req.database || opts.database.name)
+    let db = arangodb.useDatabase(getDb(req))
 
     const store = new ArangoStore(db)
 
     return store.removeById(req)
   })
   hemera.add(StorePattern.replace(topic), function(req) {
-    let db = useDb(req.database || opts.database.name)
+    let db = arangodb.useDatabase(getDb(req))
 
     const store = new ArangoStore(db)
 
     return store.replace(req, req.data)
   })
   hemera.add(StorePattern.replaceById(topic), function(req) {
-    let db = useDb(req.database || opts.database.name)
+    let db = arangodb.useDatabase(getDb(req))
 
     const store = new ArangoStore(db)
 
     return store.replaceById(req, req.data)
   })
   hemera.add(StorePattern.findById(topic), function(req) {
-    let db = useDb(req.database || opts.database.name)
+    let db = arangodb.useDatabase(getDb(req))
 
     const store = new ArangoStore(db)
 
     return store.findById(req)
   })
   hemera.add(StorePattern.find(topic), function(req) {
-    let db = useDb(req.database || opts.database.name)
+    let db = arangodb.useDatabase(getDb(req))
 
     const store = new ArangoStore(db)
 
     return store.find(req, req.options)
   })
   hemera.add(StorePattern.count(topic), function(req) {
-    let db = useDb(req.database || opts.database.name)
+    let db = arangodb.useDatabase(getDb(req))
 
     const store = new ArangoStore(db)
 
     return store.count(req, req.options)
   })
   hemera.add(StorePattern.exists(topic), function(req) {
-    let db = useDb(req.database || opts.database.name)
+    let db = arangodb.useDatabase(getDb(req))
 
     const store = new ArangoStore(db)
 
