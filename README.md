@@ -43,7 +43,7 @@ hemera.use(require('hemera-joi'))
 hemera.use(require('hemera-arango-store'), {
   database: {
     url: 'http://127.0.0.1:8529',
-    name: 'test'
+    name: 'test' // default database
   }
 })
 ```
