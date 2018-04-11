@@ -22,9 +22,9 @@ function hemeraArangoStore(hemera, opts, done) {
   function acquireHostList() {
     return arangodb
       .acquireHostList()
-      .then(() => hemera.info('Acquire new host list from server'))
+      .then(() => hemera.log.info('Acquire new host list from server'))
       .catch(err =>
-        hemera.error(err, 'Could not acquire new host list from server')
+        hemera.log.error(err, 'Could not acquire new host list from server')
       )
   }
 
