@@ -16,6 +16,16 @@ function hemeraArangoStore(hemera, opts, done) {
 
   const getDb = req => req.database || opts.database.name
 
+  // Updates the URL list by requesting a list of all coordinators in the cluster
+  setInterval(() => {
+    arangodb
+      .acquireHostList()
+      .then(() => hemera.info('Acquire new host list from server'))
+      .catch(err =>
+        hemera.error(err, 'Could not acquire new host list from server')
+      )
+  }, opts.acquireHostListInterval)
+
   /**
    * Create a new database
    */
@@ -211,6 +221,7 @@ module.exports = Hp(hemeraArangoStore, {
   dependencies: ['hemera-joi'],
   decorators: ['joi'],
   options: {
+    acquireHostListInterval: 60 * 60 * 1000, // hour
     database: {}
   }
 })
